@@ -6,6 +6,10 @@ The first option, allows you to fzf search all your $WORK subdirectories which c
 
 The second option is for use once you have some open sessions allowing you to specifically jump between your open sessions. It uses a tmux variable named '@last_session' to store the last session you jumped to in order to place it at the top of the fzf list.
 
+## Dependencies
+
+This project requires [fzf]|(https://github.com/junegunn/fzf) and [ruby]|(https://www.ruby-lang.org/) in your '$PATH'.  We recommend the most up-to-date version of fzf.  But ruby doesn't really matter.  It was just easier to parse and format the input via ruby than shell.
+
 ## Install
 
 ### Manually
@@ -25,6 +29,14 @@ set -g @plugin 'prpht9/tmux-fzf-session-switcher'
 ``
 
 Then execute `<prefix>I` within your tmux session.
+
+### Optional tmux-git for launching repos from cli
+
+There is a script which will install a link to tmux-git in the scripts directory to your '$HOME/bin' directory.  Just go execute:
+
+``
+$HOME/.tmux/plugins/tmux-fzf-session-switcher/tmux-git-cli-install.sh
+``
 
 ## Usage
 
