@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+if [[ $# -eq 1 ]]; then
+  session_dir=$1
+else
+  session_dir=$(fd '\.git$' "$WORK" -t d -H | sed -e 's@\.git/$@@' | fzf)
+fi
+
+if [[ -z $session_dir ]]; then
+  exit 0
+fi
+
+session=$(basename "$session_dir" | tr . _)
+tmux_running=$(tmux ls|echo "$?")
+
+if [ $tmux_running == "1" ] ; then
+  #tmux new-session -s $session -c $session_dir
+  tmux start-server
+fi
+
+if tmux has-session -t=$session 2> /dev/null; then
+  tmux switch-client -t ${session}
+  exit
+else
+  tmux new-session -ds $session -c $session_dir -n "localhost"
+fi
+
+tmux new-window -t ${session}:2 -n 'ide2' -c $session_dir
+tmux split-window -t ${session}:2 -h -c $session_dir
+tmux send-keys -t ${session}:2.0 'vi -S .session.vim' Enter
+#tmux new-window -t ${session}:3 -n 'con1' -c $session_dir
+tmux kill-window -t ${session}:0
+
+tmux switch-client -t ${session}:2.0

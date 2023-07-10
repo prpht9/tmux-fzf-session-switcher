@@ -1,0 +1,17 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: false
+
+tmp_last_session = `tmux show-environment -g @last_session`
+tmp_sessions = `tmux list-sessions`
+
+@last_session = tmp_last_session.gsub!(/^.*=/, '')
+@sessions = tmp_sessions.gsub!(/:.*$/, '').split
+
+# set the global @last_session variable to your current session for next time
+`tmux set-environment -g @last_session $(tmux display-message -p '#S')`
+
+@sessions.delete_if { |s| s == @last_session }
+# place the last_session at the top of the array so session-switcher can select the last session quickly
+@sessions.unshift(@last_session)
+# kick it to stdout for fzf to process on screen
+puts @sessions
