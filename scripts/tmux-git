@@ -1,9 +1,17 @@
 #!/usr/bin/env bash
 
-if [[ $# -eq 1 ]]; then
+CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+source $CURRENT_DIR/../env.sh
+
+repo_path=discover_repo_path
+repo_path=$(get_tmux_option "@tfss_repo_path" "$default_repo_path")
+session_launcher=$(get_tmux_option "@tfss_sesion_launcher" "$default_sesion_launcher")
+
+if [[ $# -eq 1 ]] ; then
   session_dir=$1
 else
-  session_dir=$(fd '\.git$' "$WORK" -t d -H | sed -e 's@\.git/$@@' | fzf)
+  session_dir=$(fd '\.git$' "$repo_path" -H | sed -r 's@\.git?/$@@' | fzf)
 fi
 
 if [[ -z $session_dir ]]; then
@@ -25,10 +33,4 @@ else
   tmux new-session -ds $session -c $session_dir -n "localhost"
 fi
 
-tmux new-window -t ${session}:2 -n 'ide2' -c $session_dir
-tmux split-window -t ${session}:2 -h -c $session_dir
-tmux send-keys -t ${session}:2.0 'vi -S .session.vim' Enter
-#tmux new-window -t ${session}:3 -n 'con1' -c $session_dir
-tmux kill-window -t ${session}:0
-
-tmux switch-client -t ${session}:2.0
+$TFSS_SESSION_LAUNCHER "$session" "$session_dir"

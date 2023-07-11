@@ -1,5 +1,15 @@
 # Changelog
 
+### v0.3, July 10, 2023
+
+- fix bug with rake release on '-F'
+- moved everything to real tmux options
+- add dependency on fd
+- add env.sh to reuse vars and functions
+- add default session launcher script
+- set launcher so it can be overridden by option
+- update README with all new option info
+
 ### v0.2, July 10, 2023
 
 - add gitattribute for eol

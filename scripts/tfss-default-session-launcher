@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+export CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+source "$CURRENT_DIR/env.sh"
+
+session=$1
+session_dir=$2
+session_window_split=$(get_tmux_option "@tfss_session_window_split" "$default_session_window_split")
+session_vim_cmd=$(get_tmux_option "@tfss_session_vim_cmd" "$default_session_vim_cmd")
+session_vim_options=$(get_tmux_option "@tfss_session_vim_options" "$default_session_vim_options")
+
+tmux new-window -t ${session}:2 -n 'ide2' -c $session_dir
+if [ "$session_window_split" == "1" ] ; then
+  tmux split-window -t ${session}:2 -h -c $session_dir
+fi
+if [ ! "$session_vim_cmd" == "" ] ; then
+  tmux send-keys -t ${session}:2.0 "$session_vim_cmd $session_vim_options" Enter
+fi
+#tmux new-window -t ${session}:3 -n 'con1' -c $session_dir
+tmux kill-window -t ${session}:0
+
+tmux switch-client -t ${session}:2.0

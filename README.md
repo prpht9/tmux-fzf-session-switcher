@@ -12,6 +12,14 @@ This project requires [fzf]|(https://github.com/junegunn/fzf) and [ruby]|(https:
 
 ## Install
 
+default_repo_selector_key=f
+default_repo_path="$HOME/work"
+default_session_switcher_key=b
+default_session_window_split=0
+default_session_vim_cmd=''
+default_session_vim_options=''
+default_session_launcher="$CURRENT_DIR/scripts/tfss-default-session-launcher"
+
 ### Manually
 
 For this method you can git clone the repo and just execute the following from the root of the project:
@@ -29,6 +37,49 @@ set -g @plugin 'prpht9/tmux-fzf-session-switcher'
 ``
 
 Then execute `<prefix>I` within your tmux session.
+
+### TFSS Configuration
+
+The following option defaults are:
+
+```
+@tfss_repo_selector_key=f
+@tfss_repo_path="$HOME/work"
+@tfss_session_switcher_key=b
+@tfss_session_window_split=0
+@tfss_session_vim_cmd=''
+@tfss_session_vim_options=''
+@tfss_session_launcher="$CURRENT_DIR/scripts/tfss-default-session-launcher"
+```
+
+All of these can be overridden.  Here is an example where we prefer to perform 1 window split for 2 panes, set our vim command to 'vi' and add '-S .session.vim' to the auto execution of the vim command so it will auto load pane 0 with vim and load all your open buffers from a previous ':mks! .session.vim' ex command.
+
+```
+set -g @tfss_session_window_split '1'
+set -g @tfss_session_vim_cmd 'vi'
+set -g @tfss_session_vim_options '-S .session.vim'
+```
+
+You can also change your repo search path with:
+
+```
+set -g @tfss_repo_papth "$HOME/workspace"
+```
+
+And change your key bindings with:
+
+```
+set -g @tfss_repo_selector_key "r"
+set -g @tfss_session_switcher_key "s"
+```
+
+However, if you use ``<leader>f`` and ``<leader>b`` in vim.  Aligning the keys for opening repos with opening files and selecting sessions with selecting buffers will create some really good muscle memory reenforcement. [HIGHLY RECOMMENDED]
+
+If you don't like the way we launch sessions, just write your own script called tfss-session-launcher and put it in:
+
+```
+set -g @tfss_session_launcher "/my/path/to/tfss-session-launcher"
+```
 
 ### Optional tmux-git for launching repos from cli
 
