@@ -12,14 +12,6 @@ This project requires [fzf]|(https://github.com/junegunn/fzf) and [ruby]|(https:
 
 ## Install
 
-default_repo_selector_key=f
-default_repo_path="$HOME/work"
-default_session_switcher_key=b
-default_session_window_split=0
-default_session_vim_cmd=''
-default_session_vim_options=''
-default_session_launcher="$CURRENT_DIR/scripts/tfss-default-session-launcher"
-
 ### Manually
 
 For this method you can git clone the repo and just execute the following from the root of the project:
