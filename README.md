@@ -10,9 +10,9 @@ The second option is for use once you have some open sessions allowing you to sp
 
 This project requires [fzf]|(https://github.com/junegunn/fzf) and [ruby]|(https://www.ruby-lang.org/) in your '$PATH'.  We recommend the most up-to-date version of fzf.  But ruby doesn't really matter.  It was just easier to parse and format the input via ruby than shell.
 
-## Install
+# Install
 
-### Manually
+## Manually
 
 For this method you can git clone the repo and just execute the following from the root of the project:
 
@@ -20,17 +20,17 @@ For this method you can git clone the repo and just execute the following from t
 ./tmux-fzf-session-switcher.tmux
 ``
 
-### TPM - Tmux Package Manager
+## TPM - Tmux Package Manager
 
 Add the following line to your `.tmux.conf`:
 
-``
+```
 set -g @plugin 'prpht9/tmux-fzf-session-switcher'
-``
+```
 
-Then execute `<prefix>I` within your tmux session.
+Then execute `<prefix>I` within your tmux session to install or ``<prefix>U`` to update.
 
-### TFSS Configuration
+# TFSS Configuration
 
 The following option defaults are:
 
@@ -73,7 +73,7 @@ If you don't like the way we launch sessions, just write your own script called 
 set -g @tfss_session_launcher "/my/path/to/tfss-session-launcher"
 ```
 
-### Optional tmux-git for launching repos from cli
+## Optional tmux-git for launching repos from cli
 
 There is a script which will install a link to tmux-git in the scripts directory to your '$HOME/bin' directory.  Just go execute:
 
@@ -81,7 +81,7 @@ There is a script which will install a link to tmux-git in the scripts directory
 $HOME/.tmux/plugins/tmux-fzf-session-switcher/tmux-git-cli-install.sh
 ``
 
-## Usage
+# Usage
 
 I come from the vim world and use fzf :Buffers and :Files to jump between open buffers with `<leader>b` and open new files with `<leader>f`.  So this plugin follows the same idea, you can jump between sessions using `<prefix>b` where the last session you were in is placed at the top to allow `<prefix>b<CR>` to go to your last session without having to use the other two key combos already mapped for that action.  then your one key combo is the same whether you jump to your last session or decide to start fuzzy searching for a different one.  Similarly `<prefix>f` brings up the entire list of git repo directories in your $WORK directory for fuzzy searching and creation of a new session on that repo.
 
