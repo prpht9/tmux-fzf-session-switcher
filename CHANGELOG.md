@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.6, July 12, 2023
+
+- fix tmux-git to work inside and outside tmux
+
 ### v0.5, July 12, 2023
 
 - remove some debuggin
