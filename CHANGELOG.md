@@ -1,6 +1,13 @@
 # Changelog
 
-### v0.3, July 10, 2023
+### v0.4, July 12, 2023
+
+- fix current_dir resolv of symlink tmux-git use
+- fix misspelled vars
+- get autoload of vim to work
+- get second pane to load
+
+### v0.3, July 11, 2023
 
 - fix bug with rake release on '-F'
 - moved everything to real tmux options

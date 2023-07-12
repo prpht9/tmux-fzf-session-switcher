@@ -1,12 +1,17 @@
 #!/usr/bin/env bash
 
-CURRENT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SOURCE=${BASH_SOURCE[0]}
+while [ -L "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
+  SOURCE=$(readlink "$SOURCE")
+  [[ $SOURCE != /* ]] && SOURCE=$DIR/$SOURCE # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+CURRENT_DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
 
 source $CURRENT_DIR/../env.sh
 
-repo_path=discover_repo_path
 repo_path=$(get_tmux_option "@tfss_repo_path" "$default_repo_path")
-session_launcher=$(get_tmux_option "@tfss_sesion_launcher" "$default_sesion_launcher")
+session_launcher=$(get_tmux_option "@tfss_session_launcher" "$default_session_launcher")
 
 if [[ $# -eq 1 ]] ; then
   session_dir=$1
@@ -26,11 +31,11 @@ if [ $tmux_running == "1" ] ; then
   tmux start-server
 fi
 
-if tmux has-session -t=$session 2> /dev/null; then
-  tmux switch-client -t ${session}
+if tmux has-session -t="${session}" 2> /dev/null; then
+  tmux switch-client -t "${session}"
   exit
 else
   tmux new-session -ds $session -c $session_dir -n "localhost"
 fi
 
-$TFSS_SESSION_LAUNCHER "$session" "$session_dir"
+eval "$session_launcher $session $session_dir"
