@@ -65,7 +65,7 @@ set -g @tfss_repo_selector_key "r"
 set -g @tfss_session_switcher_key "s"
 ```
 
-However, if you use ``<leader>f`` and ``<leader>b`` in vim.  Aligning the keys for opening repos with opening files and selecting sessions with selecting buffers will create some really good muscle memory reenforcement. [HIGHLY RECOMMENDED]
+However, if you use ``<leader>f`` and ``<leader>b`` in vim.  Aligning the keys for opening repos with opening files and selecting sessions with selecting buffers will create some really good muscle memory reenforcement. [KEEPING DEFAULT 'f' AND 'b' IS HIGHLY RECOMMENDED IN THIS SCENARIO]  (or at least match them up with whatever keys you use for FZF :Files and :Buffers in vim)
 
 If you don't like the way we launch sessions, just write your own script called tfss-session-launcher and put it in:
 
