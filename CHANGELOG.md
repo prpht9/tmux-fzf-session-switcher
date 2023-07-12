@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.5, July 12, 2023
+
+- remove some debuggin
+
 ### v0.4, July 12, 2023
 
 - fix current_dir resolv of symlink tmux-git use

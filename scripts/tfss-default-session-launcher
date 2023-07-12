@@ -16,11 +16,6 @@ session_window_split=$(get_tmux_option "@tfss_session_window_split" "$default_se
 session_vim_cmd=$(get_tmux_option "@tfss_session_vim_cmd" "$default_session_vim_cmd")
 session_vim_options=$(get_tmux_option "@tfss_session_vim_options" "$default_session_vim_options")
 
-echo $session
-echo $session_dir
-echo $session_window_split
-sleep 3
-
 tmux new-window -t ${session}:2 -n 'ide2' -c $session_dir
 if [ "$session_window_split" == "1" ] ; then
   tmux split-window -t ${session}:2 -h -c $session_dir
