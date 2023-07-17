@@ -32,7 +32,6 @@ if [ $tmux_running == "1" ] ; then
 fi
 
 if tmux has-session -t="${session}" 2> /dev/null; then
-  echo "has-session true"
   if [ -z "$TMUX" ] ; then
     tmux attach-session -t "${session}"
   else
@@ -40,7 +39,6 @@ if tmux has-session -t="${session}" 2> /dev/null; then
     exit
   fi
 else
-  echo "has-session false"
   tmux new-session -ds $session -c $session_dir -n "localhost"
   eval "$session_launcher $session $session_dir"
 fi
