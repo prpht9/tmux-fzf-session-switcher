@@ -16,7 +16,7 @@ session_launcher=$(get_tmux_option "@tfss_session_launcher" "$default_session_la
 if [[ $# -eq 1 ]] ; then
   session_dir=$1
 else
-  session_dir=$(fd '\.git$' "$repo_path" -H | sed -r 's@\.git?/$@@' | fzf)
+  session_dir=$(fd '\.git$' "$repo_path" -H | sed -r 's@/\.git/?$@@' | fzf)
 fi
 
 if [[ -z $session_dir ]]; then
@@ -32,10 +32,16 @@ if [ $tmux_running == "1" ] ; then
 fi
 
 if tmux has-session -t="${session}" 2> /dev/null; then
-  tmux switch-client -t "${session}"
-  exit
+  echo "has-session true"
+  if [ -z "$TMUX" ] ; then
+    tmux attach-session -t "${session}"
+  else
+    tmux switch-client -t "${session}"
+    exit
+  fi
 else
+  echo "has-session false"
   tmux new-session -ds $session -c $session_dir -n "localhost"
+  eval "$session_launcher $session $session_dir"
 fi
 
-eval "$session_launcher $session $session_dir"

@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.7, July 17, 2023
+
+- More fixes to tmux-git to work in and out of tmux
+
 ### v0.6, July 12, 2023
 
 - fix tmux-git to work inside and outside tmux
