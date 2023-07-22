@@ -55,7 +55,7 @@ set -g @tfss_session_vim_options '-S .session.vim'
 You can also change your repo search path with:
 
 ```
-set -g @tfss_repo_papth "$HOME/workspace"
+set -g @tfss_repo_path "$HOME/workspace"
 ```
 
 And change your key bindings with:
