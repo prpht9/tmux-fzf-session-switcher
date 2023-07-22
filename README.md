@@ -8,7 +8,7 @@ The second option is for use once you have some open sessions allowing you to sp
 
 ## Dependencies
 
-This project requires [fzf]|(https://github.com/junegunn/fzf) and [ruby]|(https://www.ruby-lang.org/) in your '$PATH'.  We recommend the most up-to-date version of fzf.  But ruby doesn't really matter.  It was just easier to parse and format the input via ruby than shell.
+This project requires [fzf]|(https://github.com/junegunn/fzf), [fd]|(https://github.com/sharkdp/fd) and [ruby]|(https://www.ruby-lang.org/) in your '$PATH'.  We recommend the most up-to-date version of fzf.  But ruby doesn't really matter.  It was just easier to parse and format the input via ruby than shell.  'fd' is required because 'find' was way too slow hunting through all the files/directoriess.
 
 # Install
 
