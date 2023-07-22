@@ -2,7 +2,7 @@
 
 This plugin offers up two options for auto loading and switching sessions attached to your git repos.
 
-The first option, allows you to fzf search all your $WORK subdirectories which contain a '.git' repo directory or a '.git' worktree file and then start a new tmux session named exactly the same as the directory.  This specifically conforms to the use of worktrees if you create the bare repo in your $WORK path, then create the worktrees using `git worktree add WORKTREE_NAME`.  if your bare repo is called hello-world.bare then you might name your worktree `hw-WORKTREE_NAME` in order to associate them with the parent repo.  Also, using this method the bare repos don't show up as sessions to work in because they don't have a '.git' directory. 
+The first option, allows you to fzf search all your $WORK subdirectories which contain a '.git' repo directory or a '.git' worktree file and then start a new tmux session named exactly the same as the directory.  This specifically conforms to the use of worktrees if you create the bare repo in your $WORK path, then create the worktrees using `git worktree add ../WORKTREE_NAME`.  if your bare repo is called hello-world.bare then you might name your worktree `hw-WORKTREE_NAME` in order to associate them with the parent repo.  Otherwise the worktree names will overlap with other repos, making them more difficult to find.  Using the bare repos ensures they won't show up as sessions to work in because they don't have a '.git' directory or '.git' file. 
 
 The second option is for use once you have some open sessions allowing you to specifically jump between your open sessions. It uses a tmux variable named '@last_session' to store the last session you jumped to in order to place it at the top of the fzf list.
 
