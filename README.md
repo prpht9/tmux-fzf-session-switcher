@@ -41,7 +41,7 @@ The following option defaults are:
 @tfss_session_window_split=0
 @tfss_session_vim_cmd=''
 @tfss_session_vim_options=''
-@tfss_session_launcher="$CURRENT_DIR/scripts/tfss-default-session-launcher"
+@tfss_session_launcher="~/.tmux/plugins/tmux-fzf-session-switcher/scripts/tfss-default-session-launcher"
 ```
 
 All of these can be overridden.  Here is an example where we prefer to perform 1 window split for 2 panes, set our vim command to 'vi' and add '-S .session.vim' to the auto execution of the vim command so it will auto load pane 0 with vim and load all your open buffers from a previous ':mks! .session.vim' ex command.
@@ -55,7 +55,7 @@ set -g @tfss_session_vim_options '-S .session.vim'
 You can also change your repo search path with:
 
 ```
-set -g @tfss_repo_path "$HOME/workspace"
+set -g @tfss_repo_path "~/workspace"
 ```
 
 And change your key bindings with:
@@ -70,7 +70,7 @@ However, if you use ``<leader>f`` and ``<leader>b`` in vim.  Aligning the keys f
 If you don't like the way we launch sessions, just write your own script called tfss-session-launcher and put it in:
 
 ```
-set -g @tfss_session_launcher "/my/path/to/tfss-session-launcher"
+set -g @tfss_session_launcher "~/bin/tfss-session-launcher"
 ```
 
 ## Optional tmux-git for launching repos from cli
