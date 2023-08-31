@@ -1,5 +1,9 @@
 # Changelog
 
+### v0.8, Aug 32, 2023
+
+- README.md updates and fix for worktrees vs repos
+
 ### v0.7, July 17, 2023
 
 - More fixes to tmux-git to work in and out of tmux
