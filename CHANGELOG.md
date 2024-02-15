@@ -1,5 +1,10 @@
 # Changelog
 
+### v0.11, Feb 15, 2024
+
+- add disable=gems to ruby shebang for faster exec
+- remvoe duplicate rd option for hidden files
+
 ### v0.8, Aug 32, 2023
 
 - README.md updates and fix for worktrees vs repos
