@@ -1,4 +1,4 @@
-#!/usr/bin/env ruby
+#!/usr/bin/env ruby --disable=gems
 # frozen_string_literal: false
 
 tmp_last_session = `tmux show-environment -g @last_session`
