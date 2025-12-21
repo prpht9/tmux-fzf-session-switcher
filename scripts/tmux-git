@@ -16,7 +16,7 @@ session_launcher=$(get_tmux_option "@tfss_session_launcher" "$default_session_la
 if [[ $# -eq 1 ]] ; then
   session_dir=$1
 else
-  session_dir=$(fd --hidden --type d --max-depth 4 '^.git$' "$repo_path" | sed -r 's@/\.git/?$@@' | fzf)
+  session_dir=$(fd --hidden --max-depth 4 '^.git$' "$repo_path" | sed -r 's@/\.git/?$@@' | fzf)
 fi
 
 if [[ -z $session_dir ]]; then
