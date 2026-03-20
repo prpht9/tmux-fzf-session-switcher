@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+
+SOURCE=${BASH_SOURCE[0]}
+while [ -L "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
+  SOURCE=$(readlink "$SOURCE")
+  [[ $SOURCE != /* ]] && SOURCE=$DIR/$SOURCE # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+CURRENT_DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
+
+source $CURRENT_DIR/../env.sh
+
+repo_path=$(get_tmux_option "@tfss_repo_path" "$default_repo_path")
+session_launcher=$(get_tmux_option "@tfss_session_launcher" "$default_session_launcher")
+
+read -n1 -r -p "New Repo (n), Bare Clone (b), Clone (c) or worktree (w)? " flow_choice
+echo '\n'
+if [[ -z $flow_choice ]]; then
+  exit 0
+fi
+
+session_dir='' # setting variable outside of case scope for use later
+
+case $flow_choice in
+  n) # create a new normal empty repo
+    read -r -p "New Repo Location: ${HOME}/" repo_loc
+    if [[ -z $repo_loc ]]; then
+      echo "Must Enter a New Repo Location"
+      exit 1
+    fi
+    session_dir="${repo_path}/${repo_loc}"
+    mkdir -p ${session_dir}
+    git init ${session_dir}
+    ;;
+
+  b) # clone a bare repo
+    read -r -p "Bare Repo URL: " repo_url
+    if [[ -z $repo_url ]]; then
+      echo "Must Enter a Bare Repo URL"
+      exit 1
+    fi
+    read -r -p "New Bare Repo Location: ${HOME}/" repo_loc
+    if [[ -z $repo_loc ]]; then
+      echo "Must Enter a Bare Repo Location"
+      exit 1
+    fi
+    read -r -p "New Worktree Name: " wt_name
+    if [[ -z $wt_name ]]; then
+      echo "Must Enter a New Worktree Name"
+      exit 1
+    fi
+    bare_dir="${HOME}/${repo_loc}"
+    parent_dir=$(dirname "$bare_dir")
+    session_dir="${parent_dir}/${wt_name}"
+    mkdir -p ${parent_dir}
+    git clone --bare ${repo_url} ${bare_dir} 
+    git -C "$bare_dir" worktree add "$session_dir"
+    ;;
+
+  c) # clone a normal repo
+    read -r -p "Clone Repo URL: " repo_url
+    if [[ -z $repo_url ]]; then
+      echo "Must Enter a Repo URL"
+      exit 1
+    fi
+    read -r -p "New Repo Location: ${HOME}/" repo_loc
+    if [[ -z $repo_loc ]]; then
+      echo "Must Enter a Repo Location"
+      exit 1
+    fi
+    clone_dir="${HOME}/${repo_loc}"
+    parent_dir=$(dirname "$clone_dir")
+    session_dir="${clone_dir}"
+    mkdir -p ${parent_dir}
+    git clone ${repo_url} ${clone_dir} 
+    ;;
+
+  w) # create worktree from fzf of bare repo
+    if [[ $# -eq 1 ]] ; then
+      bare_dir=$1
+    else
+      bare_dir=$(fd --type d --max-depth 4 '\.bare$' "$repo_path" | fzf-tmux --reverse)
+    fi
+    if [[ -z $bare_dir ]]; then
+      echo "Must Select a Bare Repo"
+      exit 1
+    fi
+    read -r -p "Enter worktree name: " wt_name
+    if [[ -z $wt_name ]]; then
+      echo "Must Enter a Worktree Name"
+      exit 1
+    fi
+    parent_dir=$(dirname "$bare_dir")
+    session_dir="${parent_dir}/${wt_name}"
+    mkdir -p ${parent_dir}
+    git -C "$bare_dir" worktree add "$session_dir"
+    echo `$cmd`
+    ;;
+
+  *)
+    echo "Repo Command Invalid"
+    exit 1
+    ;;
+esac
+
+session=$(basename "$session_dir" | tr . _)
+tmux_running=$(tmux ls 2>/dev/null && echo 0 || echo 1)
+
+if [ $tmux_running == "1" ] ; then
+  tmux start-server
+fi
+
+if tmux has-session -t="${session}" 2> /dev/null; then
+  if [ -z "$TMUX" ] ; then
+    tmux attach-session -t "${session}"
+  else
+    tmux switch-client -t "${session}"
+    exit
+  fi
+else
+  tmux new-session -ds $session -c $session_dir -n "localhost"
+  eval "$session_launcher $session $session_dir"
+fi
+

@@ -8,6 +8,7 @@ default_session_window_split=0
 default_session_vim_cmd=''
 default_session_vim_options=''
 default_session_launcher="$CURRENT_DIR/scripts/tfss-default-session-launcher"
+default_new_repo_key=n
 
 get_tmux_option() {
 	local option="$1"
