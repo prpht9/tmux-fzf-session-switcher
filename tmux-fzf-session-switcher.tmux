@@ -22,5 +22,13 @@ set_session_switcher_bindings() {
 	done
 }
 
+set_session_switcher_bindings() {
+	local key_bindings=$(get_tmux_option "$tfss_new_repo_key" "$default_new_repo_key")
+	local key
+	for key in $key_bindings; do
+    tmux bind-key "$key" new-window -n "tmux-git-new-repo" "$CURRENT_DIR/scripts/tmux-git-new-repo"
+	done
+}
+
 set_repo_selector_bindings
 set_session_switcher_bindings
