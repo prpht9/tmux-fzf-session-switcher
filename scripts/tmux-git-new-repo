@@ -23,7 +23,7 @@ session_dir='' # setting variable outside of case scope for use later
 
 case $flow_choice in
   n) # create a new normal empty repo
-    read -r -p "New Repo Location: ${HOME}/" repo_loc
+    read -r -p "New Repo Location: ${repo_path}/" repo_loc
     if [[ -z $repo_loc ]]; then
       echo "Must Enter a New Repo Location"
       exit 1
