@@ -29,8 +29,8 @@ case $flow_choice in
       exit 1
     fi
     session_dir="${repo_path}/${repo_loc}"
-    mkdir -p ${session_dir}
-    git init ${session_dir}
+    mkdir -p "${session_dir}"
+    git init "${session_dir}"
     ;;
 
   b) # clone a bare repo
@@ -52,8 +52,8 @@ case $flow_choice in
     bare_dir="${HOME}/${repo_loc}"
     parent_dir=$(dirname "$bare_dir")
     session_dir="${parent_dir}/${wt_name}"
-    mkdir -p ${parent_dir}
-    git clone --bare ${repo_url} ${bare_dir} 
+    mkdir -p "${parent_dir}"
+    git clone --bare "${repo_url}" "${bare_dir}"
     git -C "$bare_dir" worktree add "$session_dir"
     ;;
 
@@ -71,8 +71,8 @@ case $flow_choice in
     clone_dir="${HOME}/${repo_loc}"
     parent_dir=$(dirname "$clone_dir")
     session_dir="${clone_dir}"
-    mkdir -p ${parent_dir}
-    git clone ${repo_url} ${clone_dir} 
+    mkdir -p "${parent_dir}"
+    git clone "${repo_url}" "${clone_dir}"
     ;;
 
   w) # create worktree from fzf of bare repo
@@ -92,9 +92,8 @@ case $flow_choice in
     fi
     parent_dir=$(dirname "$bare_dir")
     session_dir="${parent_dir}/${wt_name}"
-    mkdir -p ${parent_dir}
+    mkdir -p "${parent_dir}"
     git -C "$bare_dir" worktree add "$session_dir"
-    echo `$cmd`
     ;;
 
   *)
@@ -104,9 +103,7 @@ case $flow_choice in
 esac
 
 session=$(basename "$session_dir" | tr . _)
-tmux_running=$(tmux ls 2>/dev/null && echo 0 || echo 1)
-
-if [ $tmux_running == "1" ] ; then
+if ! tmux ls 2>/dev/null; then
   tmux start-server
 fi
 
@@ -118,7 +115,7 @@ if tmux has-session -t="${session}" 2> /dev/null; then
     exit
   fi
 else
-  tmux new-session -ds $session -c $session_dir -n "localhost"
+  tmux new-session -ds "$session" -c "$session_dir" -n "localhost"
   eval "$session_launcher $session $session_dir"
 fi
 
