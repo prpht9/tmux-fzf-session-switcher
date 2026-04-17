@@ -24,10 +24,7 @@ if [[ -z $session_dir ]]; then
 fi
 
 session=$(basename "$session_dir" | tr . _)
-tmux_running=$(tmux ls|echo "$?")
-
-if [ $tmux_running == "1" ] ; then
-  #tmux new-session -s $session -c $session_dir
+if ! tmux ls 2>/dev/null; then
   tmux start-server
 fi
 
@@ -39,7 +36,7 @@ if tmux has-session -t="${session}" 2> /dev/null; then
     exit
   fi
 else
-  tmux new-session -ds $session -c $session_dir -n "localhost"
+  tmux new-session -ds "$session" -c "$session_dir" -n "localhost"
   eval "$session_launcher $session $session_dir"
 fi
 
