@@ -29,6 +29,13 @@ All config values are tmux options read via `get_tmux_option()` in `env.sh`, whi
 | `scripts/tfss-default-session-launcher` | Default session initializer (optional vim + pane split) |
 | `tmux-git-cli-install.sh` | Symlinks `scripts/tmux-git` into `$HOME/bin` for CLI use |
 
+## Docs
+
+| File | Topic |
+|------|-------|
+| [doc/custom-launcher.md](doc/custom-launcher.md) | `@tfss_session_launcher` contract, arguments, and examples |
+| [doc/bare-repo-worktree.md](doc/bare-repo-worktree.md) | Bare clone + worktree setup and naming conventions |
+
 ## Key Conventions
 
 - Session names: `basename` of repo dir with `.` → `_` (`tr . _`)
