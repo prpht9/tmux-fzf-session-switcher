@@ -79,7 +79,7 @@ case $flow_choice in
     if [[ $# -eq 1 ]] ; then
       bare_dir=$1
     else
-      bare_dir=$(fd --type d --max-depth 4 '\.bare$' "$repo_path" | fzf-tmux --reverse)
+      bare_dir=$(fd --type d --max-depth 4 '\.bare$' "$repo_path" | ${TFSS_FZF_CMD:-fzf-tmux --reverse})
     fi
     if [[ -z $bare_dir ]]; then
       echo "Must Select a Bare Repo"
