@@ -13,7 +13,11 @@ A tmux plugin for fuzzy-search session switching and git repo management. Three 
 rake release  # Creates GitHub release from VERSION + CHANGELOG
 ```
 
-No test suite or linter.
+```bash
+rake test       # Runs RSpec integration tests in Docker container
+rake test:up    # Build image + start container
+rake test:down  # Stop container
+```
 
 ## Architecture
 
@@ -35,6 +39,7 @@ All config values are tmux options read via `get_tmux_option()` in `env.sh`, whi
 |------|-------|
 | [doc/custom-launcher.md](doc/custom-launcher.md) | `@tfss_session_launcher` contract, arguments, and examples |
 | [doc/bare-repo-worktree.md](doc/bare-repo-worktree.md) | Bare clone + worktree setup and naming conventions |
+| [doc/testing.md](doc/testing.md) | Test infrastructure, spec coverage, and Docker setup |
 
 ## Key Conventions
 
