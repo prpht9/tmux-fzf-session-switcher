@@ -26,3 +26,18 @@ get_bare_repo_prefix() {
 	git -C "$bare_dir" config tfss.prefix 2>/dev/null
 }
 
+# read with pre-filled path; uses readline -i on bash 4+, prompt prefix on 3.x
+# Usage: read_prefilled VARNAME "prompt" "prefill"
+# On bash 4+: editable pre-filled input
+# On bash 3.x: prefill shown as prompt, user types suffix, result = prefill + suffix
+read_prefilled() {
+	local _var="$1" _prompt="$2" _prefill="$3"
+	if [[ ${BASH_VERSINFO[0]} -ge 4 ]]; then
+		read -e -p "$_prompt" -i "$_prefill" "$_var"
+	else
+		local _suffix
+		read -r -p "${_prompt}${_prefill}" _suffix
+		eval "$_var=\"\${_prefill}\${_suffix}\""
+	fi
+}
+
