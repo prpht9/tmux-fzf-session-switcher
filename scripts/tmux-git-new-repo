@@ -13,7 +13,7 @@ source $CURRENT_DIR/../env.sh
 repo_path=$(get_tmux_option "@tfss_repo_path" "$default_repo_path")
 session_launcher=$(get_tmux_option "@tfss_session_launcher" "$default_session_launcher")
 
-read -n1 -r -p "New Repo (n), Bare Clone (b), Clone (c), Worktree (w) or Prefix (p)? " flow_choice
+read -n1 -r -p "New Repo (n), Bare Clone (b), Clone (c) or Worktree (w)? " flow_choice
 echo
 if [[ -z $flow_choice ]]; then
   exit 0
@@ -116,26 +116,6 @@ case $flow_choice in
     fi
     mkdir -p "${parent_dir}"
     git -C "$bare_dir" worktree add "$session_dir"
-    ;;
-
-  p) # set prefix on existing bare repo
-    bare_dir=$(fd --type d --max-depth 4 '\.bare$' "$repo_path" | ${TFSS_FZF_CMD:-fzf-tmux --reverse})
-    if [[ -z $bare_dir ]]; then
-      echo "Must Select a Bare Repo"
-      exit 1
-    fi
-    current=$(get_bare_repo_prefix "$bare_dir")
-    if [[ -n $current ]]; then
-      echo "Current prefix: ${current}"
-    fi
-    read -r -p "Enter prefix: " new_prefix
-    if [[ -z $new_prefix ]]; then
-      echo "Must Enter a Prefix"
-      exit 1
-    fi
-    git -C "$bare_dir" config --local tfss.prefix "$new_prefix"
-    echo "Prefix set to '${new_prefix}' for $(basename "$bare_dir")"
-    exit 0
     ;;
 
   *)
