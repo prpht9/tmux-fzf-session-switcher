@@ -12,6 +12,8 @@ The third option is an interactive wizard for creating new repos, cloning bare r
 
 This project requires [fzf](https://github.com/junegunn/fzf), [fd](https://github.com/sharkdp/fd) and [ruby](https://www.ruby-lang.org/) in your `$PATH`. We recommend the most up-to-date version of fzf. `fd` is required because `find` is too slow hunting through all the files/directories.
 
+For running the test suite: [Docker](https://www.docker.com/) (or [Rancher Desktop](https://rancherdesktop.io/)) and Ruby with Bundler on the host.
+
 # Install
 
 ## Manually
@@ -90,3 +92,14 @@ I come from the vim world and use fzf `:Buffers` and `:Files` to jump between op
 - `<prefix>b` — jump between sessions; the last session you were in is placed at the top to allow `<prefix>b<CR>` to go to your last session quickly
 - `<prefix>f` — fzf search all git repo directories in your `@tfss_repo_path` and create or attach to a session
 - `<prefix>n` — interactive wizard to create a new repo, clone a bare repo, clone a normal repo, or add a worktree
+
+# Testing
+
+Tests run inside a Docker container to avoid interfering with your live tmux session. See [doc/testing.md](doc/testing.md) for full details.
+
+```bash
+bundle install
+rake test:up    # build image + start container
+rake test        # run all specs
+rake test:down   # stop container
+```
