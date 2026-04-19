@@ -91,7 +91,30 @@ I come from the vim world and use fzf `:Buffers` and `:Files` to jump between op
 
 - `<prefix>b` — jump between sessions; the last session you were in is placed at the top to allow `<prefix>b<CR>` to go to your last session quickly
 - `<prefix>f` — fzf search all git repo directories in your `@tfss_repo_path` and create or attach to a session
-- `<prefix>n` — interactive wizard to create a new repo, clone a bare repo, clone a normal repo, or add a worktree
+- `<prefix>n` — interactive wizard to create a new repo, clone a bare repo, clone a normal repo, add a worktree, or set a prefix
+
+## Preparing Bare Repos for TFSS
+
+When using bare repos with worktrees, set a **short prefix** (2-4 characters) per repo. This prefix auto-prepends to worktree names, keeping tmux sessions short and distinct for fast fzf switching.
+
+```bash
+# Set a prefix on an existing bare repo
+git -C ~/work/myproject.bare config --local tfss.prefix mp
+git -C ~/work/data-api.bare config --local tfss.prefix da
+git -C ~/work/dotfiles.bare config --local tfss.prefix dot
+```
+
+With a prefix set, creating a worktree via `<prefix>n` → `w` shows:
+
+```
+Enter worktree name [mp-]: fix-login
+# Creates ~/work/mp-fix-login/ with session name mp-fix-login
+```
+
+You can also set the prefix:
+- **During bare clone** (`<prefix>n` → `b`) — prompted after clone
+- **On existing repos** (`<prefix>n` → `p`) — pick a bare repo and set its prefix
+- **On first worktree** (`<prefix>n` → `w`) — prompted if no prefix is set yet
 
 # Testing
 

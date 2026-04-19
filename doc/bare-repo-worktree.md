@@ -51,6 +51,25 @@ Result:
 
 So `<prefix>f` can jump to any worktree directory directly.
 
+## Worktree Prefix
+
+Store a short prefix per bare repo via git config:
+
+```bash
+git -C ~/work/myproject.bare config --local tfss.prefix mp
+```
+
+When creating worktrees (`<prefix>n` → `w`), the prompt auto-prepends the prefix:
+
+```
+Enter worktree name [mp-]: fix-login
+# Creates: ~/work/mp-fix-login/
+```
+
+Set during bare clone (`<prefix>n` → `b`) or later (`<prefix>n` → `p`).
+
+If you type a name already starting with the prefix (e.g., `mp-fix-login`), it won't double-prefix.
+
 ## Naming Convention
 
 Use a short prefix tied to the project for worktree names. If the bare repo is `myproject.bare`, name worktrees `mp-BRANCH` (e.g., `mp-main`, `mp-fix-login`). This keeps sessions identifiable and prevents name collisions with other repos in the same directory.

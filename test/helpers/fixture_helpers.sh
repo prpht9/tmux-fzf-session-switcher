@@ -43,4 +43,15 @@ git -C "$BASE/myproject.bare" worktree add -b feature "$BASE/mp-feature" HEAD
 
 rm -rf "$SEED"
 
+# --- Bare clone with tfss.prefix set ---
+SEED2=$(mktemp -d)
+git init "$SEED2"
+(cd "$SEED2" && touch README && git add . && git commit -m "seed")
+
+git clone --bare "$SEED2" "$BASE/prefixed.bare"
+git -C "$BASE/prefixed.bare" config --local tfss.prefix px
+git -C "$BASE/prefixed.bare" worktree add "$BASE/px-main" HEAD
+
+rm -rf "$SEED2"
+
 echo "Fixtures created under $BASE"

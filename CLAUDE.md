@@ -48,3 +48,4 @@ All config values are tmux options read via `get_tmux_option()` in `env.sh`, whi
 - Bare repo / worktree support: `fd` searches depth ≤ 4 for `.git` files and dirs
 - Ruby scripts run with `ruby --disable=gems` for speed
 - Config keys: `@tfss_repo_path` (default `$HOME/work`), `@tfss_repo_selector_key`, `@tfss_session_switcher_key`, `@tfss_new_repo_key`, `@tfss_session_window_split`, `@tfss_session_vim_cmd`, `@tfss_session_launcher`
+- Per-project prefix: `git config --local tfss.prefix <short>` in bare repos — auto-prepended to worktree names during creation

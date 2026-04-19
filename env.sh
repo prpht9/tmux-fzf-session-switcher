@@ -21,3 +21,8 @@ get_tmux_option() {
 	fi
 }
 
+get_bare_repo_prefix() {
+	local bare_dir="$1"
+	git -C "$bare_dir" config tfss.prefix 2>/dev/null
+}
+

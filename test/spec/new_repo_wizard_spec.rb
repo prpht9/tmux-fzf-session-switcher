@@ -11,6 +11,9 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
     docker_exec("rm -rf /root/work/bareclone.bare")
     docker_exec("rm -rf /root/work/bc-main")
     docker_exec("rm -rf /root/work/new-worktree")
+    docker_exec("rm -rf /root/work/my-inline-wt")
+    docker_exec("git -C /root/work/myproject.bare config --unset tfss.prefix 2>/dev/null; true")
+    docker_exec("git -C /root/work/myproject.bare worktree prune 2>/dev/null; true")
   end
 
   after(:each) { stop_tmux }
@@ -90,7 +93,7 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
   end
 
   describe "bare clone flow (b)" do
-    it "creates a bare repo and first worktree" do
+    it "creates a bare repo and first worktree without prefix" do
       script = <<~EXPECT
         set timeout 15
         spawn bash /opt/tfss/scripts/tmux-git-new-repo
@@ -100,7 +103,9 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
         send "/root/work/normal-repo\\r"
         expect "New Bare Repo Location*"
         send "work/bareclone.bare\\r"
-        expect "New Worktree Name*"
+        expect "prefix*"
+        send "\\r"
+        expect "New worktree*"
         send "bc-main\\r"
         expect eof
       EXPECT
@@ -119,14 +124,46 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
       result = docker_exec("tmux has-session -t bc-main 2>&1; echo $?")
       expect(result.stdout).to end_with("0")
     end
+
+    it "creates a bare repo with prefix and auto-prepends to worktree name" do
+      docker_exec("rm -rf /root/work/prefclone.bare /root/work/pf-main")
+      script = <<~EXPECT
+        set timeout 15
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "b"
+        expect "Bare Repo URL*"
+        send "/root/work/normal-repo\\r"
+        expect "New Bare Repo Location*"
+        send "work/prefclone.bare\\r"
+        expect "prefix*"
+        send "pf\\r"
+        expect "*pf-*"
+        send "main\\r"
+        expect eof
+      EXPECT
+      run_wizard_with_expect(script)
+      sleep 1
+
+      # Prefix stored in git config
+      result = docker_exec("git -C /root/work/prefclone.bare config tfss.prefix")
+      expect(result.stdout).to eq("pf")
+
+      # Worktree created with prefix
+      result = docker_exec("test -f /root/work/pf-main/.git && echo yes || echo no")
+      expect(result.stdout).to eq("yes")
+
+      result = docker_exec("tmux has-session -t pf-main 2>&1; echo $?")
+      expect(result.stdout).to end_with("0")
+    end
   end
 
   describe "worktree from bare flow (w)" do
     it "adds a worktree to an existing bare repo" do
-      # Use the fixture's myproject.bare
+      # Use the fixture's myproject.bare (no prefix set)
       script = <<~EXPECT
         set timeout 15
-        set env(TFSS_FZF_CMD) "head -1"
+        set env(TFSS_FZF_CMD) "grep myproject"
         spawn bash /opt/tfss/scripts/tmux-git-new-repo
         expect "New Repo*"
         send "w"
@@ -142,6 +179,114 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
 
       result = docker_exec("tmux has-session -t new-worktree 2>&1; echo $?")
       expect(result.stdout).to end_with("0")
+    end
+  end
+
+  describe "top-level prefix gate" do
+    it "prompts to set prefix when run from an unprefixed worktree" do
+      # mp-main is a worktree of myproject.bare (no prefix set)
+      # Run the script from inside mp-main so the gate fires
+      docker_exec("git -C /root/work/myproject.bare config --unset tfss.prefix 2>/dev/null; true")
+      script = <<~EXPECT
+        set timeout 15
+        spawn bash -c "cd /root/work/mp-main && bash /opt/tfss/scripts/tmux-git-new-repo"
+        expect "Set prefix*"
+        send "my\\r"
+        expect "Prefix*"
+        expect "New Repo*"
+        send "\\r"
+        expect eof
+      EXPECT
+      result = run_wizard_with_expect(script, timeout: 30)
+      expect(result.stdout).to include("Prefix 'my' set")
+
+      result = docker_exec("git -C /root/work/myproject.bare config tfss.prefix")
+      expect(result.stdout).to eq("my")
+    end
+
+    it "skips prompt when prefix is already set" do
+      docker_exec("git -C /root/work/prefixed.bare config tfss.prefix px")
+      script = <<~EXPECT
+        set timeout 10
+        spawn bash -c "cd /root/work/px-main && bash /opt/tfss/scripts/tmux-git-new-repo"
+        expect "New Repo*"
+        send "\\r"
+        expect eof
+      EXPECT
+      result = run_wizard_with_expect(script)
+      # Should NOT contain the prefix prompt
+      expect(result.stdout).not_to include("Set prefix")
+    end
+  end
+
+  describe "worktree with prefix (w)" do
+    before(:each) do
+      docker_exec("rm -rf /root/work/px-new-wt /root/work/px-override-wt")
+      docker_exec("git -C /root/work/prefixed.bare worktree prune 2>/dev/null; true")
+    end
+
+    it "auto-prepends prefix to worktree name" do
+      # prefixed.bare has tfss.prefix = px
+      script = <<~EXPECT
+        set timeout 15
+        set env(TFSS_FZF_CMD) "grep prefixed"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "w"
+        expect "*px-*"
+        send "new-wt\\r"
+        expect eof
+      EXPECT
+      run_wizard_with_expect(script)
+      sleep 1
+
+      result = docker_exec("test -d /root/work/px-new-wt && echo yes || echo no")
+      expect(result.stdout).to eq("yes")
+
+      result = docker_exec("tmux has-session -t px-new-wt 2>&1; echo $?")
+      expect(result.stdout).to end_with("0")
+    end
+
+    it "pre-fills path and prefix in the prompt" do
+      # With read -e -i, the prompt shows "/root/work/px-" pre-filled
+      # Sending just the suffix appends to it
+      script = <<~EXPECT
+        set timeout 15
+        set env(TFSS_FZF_CMD) "grep prefixed"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "w"
+        expect "*/root/work/px-*"
+        send "override-wt\\r"
+        expect eof
+      EXPECT
+      run_wizard_with_expect(script)
+      sleep 1
+
+      result = docker_exec("test -d /root/work/px-override-wt && echo yes || echo no")
+      expect(result.stdout).to eq("yes")
+    end
+  end
+
+  describe "set prefix flow (p)" do
+    it "sets prefix on an existing bare repo" do
+      docker_exec("git -C /root/work/myproject.bare config --unset tfss.prefix 2>/dev/null; true")
+      script = <<~EXPECT
+        set timeout 15
+        set env(TFSS_FZF_CMD) "grep myproject"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "p"
+        expect "Enter prefix*"
+        send "mp\\r"
+        expect "Prefix set*"
+        expect eof
+      EXPECT
+      result = run_wizard_with_expect(script)
+      expect(result.stdout).to include("Prefix set")
+
+      result = docker_exec("git -C /root/work/myproject.bare config tfss.prefix")
+      expect(result.stdout).to eq("mp")
     end
   end
 
