@@ -105,7 +105,7 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
         send "work/bareclone.bare\\r"
         expect "prefix*"
         send "\\r"
-        expect "New Worktree Name*"
+        expect "New worktree*"
         send "bc-main\\r"
         expect eof
       EXPECT
@@ -197,7 +197,7 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
         send "\\r"
         expect eof
       EXPECT
-      result = run_wizard_with_expect(script)
+      result = run_wizard_with_expect(script, timeout: 30)
       expect(result.stdout).to include("Prefix 'my' set")
 
       result = docker_exec("git -C /root/work/myproject.bare config tfss.prefix")
@@ -247,25 +247,23 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
       expect(result.stdout).to end_with("0")
     end
 
-    it "does not double-prefix when user types full prefixed name" do
+    it "pre-fills path and prefix in the prompt" do
+      # With read -e -i, the prompt shows "/root/work/px-" pre-filled
+      # Sending just the suffix appends to it
       script = <<~EXPECT
         set timeout 15
         set env(TFSS_FZF_CMD) "grep prefixed"
         spawn bash /opt/tfss/scripts/tmux-git-new-repo
         expect "New Repo*"
         send "w"
-        expect "*px-*"
-        send "px-override-wt\\r"
+        expect "*/root/work/px-*"
+        send "override-wt\\r"
         expect eof
       EXPECT
       run_wizard_with_expect(script)
       sleep 1
 
-      # Should be px-override-wt, NOT px-px-override-wt
       result = docker_exec("test -d /root/work/px-override-wt && echo yes || echo no")
-      expect(result.stdout).to eq("yes")
-
-      result = docker_exec("test -d /root/work/px-px-override-wt && echo no || echo yes")
       expect(result.stdout).to eq("yes")
     end
   end

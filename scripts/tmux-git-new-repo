@@ -74,24 +74,14 @@ case $flow_choice in
       git -C "$bare_dir" config --local tfss.prefix "$prefix"
     fi
     if [[ -n $prefix ]]; then
-      read -r -p "New Worktree Name [${prefix}-]: " wt_suffix
-      if [[ -z $wt_suffix ]]; then
-        echo "Must Enter a New Worktree Name"
-        exit 1
-      fi
-      if [[ $wt_suffix == ${prefix}-* ]]; then
-        wt_name="$wt_suffix"
-      else
-        wt_name="${prefix}-${wt_suffix}"
-      fi
+      read -e -p "New worktree: " -i "${parent_dir}/${prefix}-" session_dir
     else
-      read -r -p "New Worktree Name: " wt_name
-      if [[ -z $wt_name ]]; then
-        echo "Must Enter a New Worktree Name"
-        exit 1
-      fi
+      read -e -p "New worktree: " -i "${parent_dir}/" session_dir
     fi
-    session_dir="${parent_dir}/${wt_name}"
+    if [[ -z $session_dir || $session_dir == "${parent_dir}/" || $session_dir == "${parent_dir}/${prefix}-" ]]; then
+      echo "Must Enter a New Worktree Name"
+      exit 1
+    fi
     git -C "$bare_dir" worktree add "$session_dir"
     ;;
 
@@ -123,27 +113,17 @@ case $flow_choice in
       echo "Must Select a Bare Repo"
       exit 1
     fi
+    parent_dir=$(dirname "$bare_dir")
     prefix=$(get_bare_repo_prefix "$bare_dir")
     if [[ -n $prefix ]]; then
-      read -r -p "Enter worktree name [${prefix}-]: " wt_suffix
-      if [[ -z $wt_suffix ]]; then
-        echo "Must Enter a Worktree Name"
-        exit 1
-      fi
-      if [[ $wt_suffix == ${prefix}-* ]]; then
-        wt_name="$wt_suffix"
-      else
-        wt_name="${prefix}-${wt_suffix}"
-      fi
+      read -e -p "New worktree: " -i "${parent_dir}/${prefix}-" session_dir
     else
-      read -r -p "Enter worktree name: " wt_name
-      if [[ -z $wt_name ]]; then
-        echo "Must Enter a Worktree Name"
-        exit 1
-      fi
+      read -e -p "New worktree: " -i "${parent_dir}/" session_dir
     fi
-    parent_dir=$(dirname "$bare_dir")
-    session_dir="${parent_dir}/${wt_name}"
+    if [[ -z $session_dir || $session_dir == "${parent_dir}/" || $session_dir == "${parent_dir}/${prefix}-" ]]; then
+      echo "Must Enter a Worktree Name"
+      exit 1
+    fi
     mkdir -p "${parent_dir}"
     git -C "$bare_dir" worktree add "$session_dir"
     ;;
