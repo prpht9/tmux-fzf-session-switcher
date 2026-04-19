@@ -14,7 +14,7 @@ repo_path=$(get_tmux_option "@tfss_repo_path" "$default_repo_path")
 session_launcher=$(get_tmux_option "@tfss_session_launcher" "$default_session_launcher")
 
 read -n1 -r -p "New Repo (n), Bare Clone (b), Clone (c) or worktree (w)? " flow_choice
-echo '\n'
+echo
 if [[ -z $flow_choice ]]; then
   exit 0
 fi
