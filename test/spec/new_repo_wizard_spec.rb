@@ -281,6 +281,59 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
     end
   end
 
+  describe "delete worktree flow (d)" do
+    before(:each) do
+      docker_exec("rm -rf /root/work/mp-delete-test")
+      docker_exec("git -C /root/work/myproject.bare worktree add /root/work/mp-delete-test HEAD 2>/dev/null; true")
+    end
+
+    after(:each) do
+      docker_exec("git -C /root/work/myproject.bare worktree remove --force /root/work/mp-delete-test 2>/dev/null; true")
+      docker_exec("git -C /root/work/myproject.bare worktree prune 2>/dev/null; true")
+      docker_exec("tmux kill-session -t mp-delete-test 2>/dev/null; true")
+      docker_exec("tmux kill-session -t anchor 2>/dev/null; true")
+    end
+
+    it "shows 'd' option in menu when pane is in a bare-repo worktree" do
+      script = <<~EXPECT
+        set timeout 10
+        set env(TFSS_PANE_PATH) "/root/work/mp-delete-test"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "\\r"
+        expect eof
+      EXPECT
+      result = run_wizard_with_expect(script)
+      expect(result.stdout).to include("Delete Worktree (d)")
+    end
+
+    it "does not show 'd' option when pane is in a normal repo" do
+      script = <<~EXPECT
+        set timeout 10
+        set env(TFSS_PANE_PATH) "/root/work/normal-repo"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "\\r"
+        expect eof
+      EXPECT
+      result = run_wizard_with_expect(script)
+      expect(result.stdout).not_to include("Delete Worktree")
+    end
+
+    it "does not show 'd' option when pane is not a git repo" do
+      script = <<~EXPECT
+        set timeout 10
+        set env(TFSS_PANE_PATH) "/root/work/not-a-repo"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "\\r"
+        expect eof
+      EXPECT
+      result = run_wizard_with_expect(script)
+      expect(result.stdout).not_to include("Delete Worktree")
+    end
+  end
+
   describe "empty choice" do
     it "exits cleanly when user presses Enter at flow choice" do
       script = <<~EXPECT
