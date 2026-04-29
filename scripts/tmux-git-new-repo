@@ -157,17 +157,21 @@ case $flow_choice in
       echo "A prefix is required for Jira worktrees"
       exit 1
     fi
-    read -r -p "Worktree name: " worktree_name
-    if [[ -z $worktree_name ]]; then
-      echo "Must Enter a Worktree Name"
-      exit 1
-    fi
+    jira_dir="${parent_dir}/${prefix}"
+    echo
+    echo "Bare repo:  $bare_dir"
+    echo "Jira dir:   ${jira_dir}/"
+    echo
     read -r -p "Jira ID: " jira_id
     if [[ -z $jira_id ]]; then
       echo "Must Enter a Jira ID"
       exit 1
     fi
-    jira_dir="${parent_dir}/${prefix}"
+    read -r -p "Worktree name: " worktree_name
+    if [[ -z $worktree_name ]]; then
+      echo "Must Enter a Worktree Name"
+      exit 1
+    fi
     session_dir="${jira_dir}/${worktree_name}-${jira_id}"
     mkdir -p "${jira_dir}"
     git -C "$bare_dir" worktree add "$session_dir"

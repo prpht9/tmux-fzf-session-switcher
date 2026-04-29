@@ -305,6 +305,22 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
       expect(result.stdout).to include("Jira Worktree (j)")
     end
 
+    it "displays bare repo path and jira dir before prompting" do
+      script = <<~EXPECT
+        set timeout 15
+        set env(TFSS_FZF_CMD) "grep prefixed"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "j"
+        expect "Jira ID*"
+        send "\\r"
+        expect eof
+      EXPECT
+      result = run_wizard_with_expect(script)
+      expect(result.stdout).to include("prefixed.bare")
+      expect(result.stdout).to include("/root/work/px/")
+    end
+
     it "creates the worktree at {parent}/{prefix}/{name}-{jira_id}, not as a flat sibling" do
       # prefixed.bare is at /root/work/prefixed.bare → parent = /root/work, prefix = px
       # so the jira worktree must land at /root/work/px/feat-PROJ-42
@@ -314,10 +330,10 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
         spawn bash /opt/tfss/scripts/tmux-git-new-repo
         expect "New Repo*"
         send "j"
-        expect "Worktree name*"
-        send "feat\\r"
         expect "Jira ID*"
         send "PROJ-42\\r"
+        expect "Worktree name*"
+        send "feat\\r"
         expect eof
       EXPECT
       run_wizard_with_expect(script)
@@ -339,10 +355,10 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
         spawn bash /opt/tfss/scripts/tmux-git-new-repo
         expect "New Repo*"
         send "j"
-        expect "Worktree name*"
-        send "feat\\r"
         expect "Jira ID*"
         send "PROJ-42\\r"
+        expect "Worktree name*"
+        send "feat\\r"
         expect eof
       EXPECT
       run_wizard_with_expect(script)
@@ -362,10 +378,10 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
         spawn bash /opt/tfss/scripts/tmux-git-new-repo
         expect "New Repo*"
         send "j"
-        expect "Worktree name*"
-        send "feat\\r"
         expect "Jira ID*"
         send "PROJ-42\\r"
+        expect "Worktree name*"
+        send "feat\\r"
         expect eof
       EXPECT
       run_wizard_with_expect(script)
@@ -385,10 +401,10 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
         send "j"
         expect "Set prefix*"
         send "mp\\r"
-        expect "Worktree name*"
-        send "feat\\r"
         expect "Jira ID*"
         send "MP-1\\r"
+        expect "Worktree name*"
+        send "feat\\r"
         expect eof
       EXPECT
       run_wizard_with_expect(script)
@@ -422,24 +438,6 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
       expect(result.exit_code).to eq(1)
     end
 
-    it "errors when worktree name is empty" do
-      script = <<~EXPECT
-        set timeout 15
-        set env(TFSS_FZF_CMD) "grep prefixed"
-        spawn bash /opt/tfss/scripts/tmux-git-new-repo
-        expect "New Repo*"
-        send "j"
-        expect "Worktree name*"
-        send "\\r"
-        expect eof
-        catch wait result
-        exit [lindex $result 3]
-      EXPECT
-      result = run_wizard_with_expect(script)
-      expect(result.stdout).to include("Must Enter a Worktree Name")
-      expect(result.exit_code).to eq(1)
-    end
-
     it "errors when jira ID is empty" do
       script = <<~EXPECT
         set timeout 15
@@ -447,8 +445,6 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
         spawn bash /opt/tfss/scripts/tmux-git-new-repo
         expect "New Repo*"
         send "j"
-        expect "Worktree name*"
-        send "feat\\r"
         expect "Jira ID*"
         send "\\r"
         expect eof
@@ -457,6 +453,26 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
       EXPECT
       result = run_wizard_with_expect(script)
       expect(result.stdout).to include("Must Enter a Jira ID")
+      expect(result.exit_code).to eq(1)
+    end
+
+    it "errors when worktree name is empty" do
+      script = <<~EXPECT
+        set timeout 15
+        set env(TFSS_FZF_CMD) "grep prefixed"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "j"
+        expect "Jira ID*"
+        send "PROJ-42\\r"
+        expect "Worktree name*"
+        send "\\r"
+        expect eof
+        catch wait result
+        exit [lindex $result 3]
+      EXPECT
+      result = run_wizard_with_expect(script)
+      expect(result.stdout).to include("Must Enter a Worktree Name")
       expect(result.exit_code).to eq(1)
     end
 
@@ -469,10 +485,10 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
         spawn bash /opt/tfss/scripts/tmux-git-new-repo
         expect "New Repo*"
         send "j"
-        expect "Worktree name*"
-        send "task\\r"
         expect "Jira ID*"
         send "MP-99\\r"
+        expect "Worktree name*"
+        send "task\\r"
         expect eof
       EXPECT
       run_wizard_with_expect(script)
