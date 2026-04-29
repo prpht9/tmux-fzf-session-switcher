@@ -21,7 +21,7 @@ if [[ -n $bare_dir && $bare_dir =~ \.bare/?$ ]]; then
   in_bare_worktree=1
 fi
 
-menu="New Repo (n), Bare Clone (b), Clone (c), Worktree (w) or Prefix (p)"
+menu="New Repo (n), Bare Clone (b), Clone (c), Worktree (w), Jira Worktree (j) or Prefix (p)"
 if [[ $in_bare_worktree -eq 1 ]]; then
   menu="${menu} or Delete Worktree (d)"
 fi
@@ -127,6 +127,49 @@ case $flow_choice in
       exit 1
     fi
     mkdir -p "${parent_dir}"
+    git -C "$bare_dir" worktree add "$session_dir"
+    ;;
+
+  j) # create a jira-style worktree at ../{prefix}/{name}-{jira_id}
+    if [[ $in_bare_worktree -eq 1 ]]; then
+      : # bare_dir already set at top of script
+    else
+      bare_dir=$(fd --type d --max-depth 4 '\.bare$' "$repo_path" | ${TFSS_FZF_CMD:-fzf-tmux --reverse})
+    fi
+    if [[ -z $bare_dir ]]; then
+      echo "Must Select a Bare Repo"
+      exit 1
+    fi
+    parent_dir=$(dirname "$bare_dir")
+    prefix=$(get_bare_repo_prefix "$bare_dir")
+    if [[ -z $prefix ]]; then
+      bare_name=$(basename "$bare_dir" .bare)
+      echo "No tfss.prefix set for $(basename "$bare_dir")."
+      echo "A prefix is a distinct 2-4 char short form of '${bare_name}'"
+      echo "  e.g., 'mp' for myproject, 'da' for data-api, 'dot' for dotfiles"
+      read -r -p "Set prefix [2-4 chars or Enter to skip]: " new_prefix
+      if [[ -n $new_prefix ]]; then
+        git -C "$bare_dir" config --local tfss.prefix "$new_prefix"
+        prefix="$new_prefix"
+      fi
+    fi
+    if [[ -z $prefix ]]; then
+      echo "A prefix is required for Jira worktrees"
+      exit 1
+    fi
+    read -r -p "Worktree name: " worktree_name
+    if [[ -z $worktree_name ]]; then
+      echo "Must Enter a Worktree Name"
+      exit 1
+    fi
+    read -r -p "Jira ID: " jira_id
+    if [[ -z $jira_id ]]; then
+      echo "Must Enter a Jira ID"
+      exit 1
+    fi
+    jira_dir="${parent_dir}/${prefix}"
+    session_dir="${jira_dir}/${worktree_name}-${jira_id}"
+    mkdir -p "${jira_dir}"
     git -C "$bare_dir" worktree add "$session_dir"
     ;;
 
