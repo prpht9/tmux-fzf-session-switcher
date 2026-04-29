@@ -281,6 +281,225 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
     end
   end
 
+  describe "jira worktree flow (j)" do
+    before(:each) do
+      # worktree remove before rm -rf so git housekeeping stays clean
+      docker_exec("git -C /root/work/prefixed.bare worktree remove --force /root/work/px/feat-PROJ-42 2>/dev/null; true")
+      docker_exec("git -C /root/work/prefixed.bare worktree remove --force /root/work/px/task-MP-99 2>/dev/null; true")
+      docker_exec("git -C /root/work/myproject.bare worktree remove --force /root/work/mp/feat-MP-1 2>/dev/null; true")
+      docker_exec("rm -rf /root/work/px")   # jira subdir for prefixed.bare (distinct from px-main sibling)
+      docker_exec("rm -rf /root/work/mp")   # jira subdir for myproject.bare when prefix = mp
+      docker_exec("git -C /root/work/prefixed.bare worktree prune 2>/dev/null; true")
+      # outer before(:each) already unsets myproject.bare prefix and prunes it
+    end
+
+    it "shows 'Jira Worktree (j)' in the menu" do
+      script = <<~EXPECT
+        set timeout 5
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "\\r"
+        expect eof
+      EXPECT
+      result = run_wizard_with_expect(script)
+      expect(result.stdout).to include("Jira Worktree (j)")
+    end
+
+    it "displays bare repo path and jira dir before prompting" do
+      script = <<~EXPECT
+        set timeout 15
+        set env(TFSS_FZF_CMD) "grep prefixed"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "j"
+        expect "Jira ID*"
+        send "\\r"
+        expect eof
+      EXPECT
+      result = run_wizard_with_expect(script)
+      expect(result.stdout).to include("prefixed.bare")
+      expect(result.stdout).to include("/root/work/px/")
+    end
+
+    it "creates the worktree at {parent}/{prefix}/{name}-{jira_id}, not as a flat sibling" do
+      # prefixed.bare is at /root/work/prefixed.bare → parent = /root/work, prefix = px
+      # so the jira worktree must land at /root/work/px/feat-PROJ-42
+      script = <<~EXPECT
+        set timeout 15
+        set env(TFSS_FZF_CMD) "grep prefixed"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "j"
+        expect "Jira ID*"
+        send "PROJ-42\\r"
+        expect "Worktree name*"
+        send "feat\\r"
+        expect eof
+      EXPECT
+      run_wizard_with_expect(script)
+      sleep 1
+
+      # Correct nested location
+      result = docker_exec("test -f /root/work/px/feat-PROJ-42/.git && echo yes || echo no")
+      expect(result.stdout).to eq("yes")
+
+      # Must NOT appear at the flat-sibling location regular worktrees use
+      result = docker_exec("test -d /root/work/px-feat-PROJ-42 && echo yes || echo no")
+      expect(result.stdout).to eq("no")
+    end
+
+    it "creates a tmux session named after the worktree directory basename" do
+      script = <<~EXPECT
+        set timeout 15
+        set env(TFSS_FZF_CMD) "grep prefixed"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "j"
+        expect "Jira ID*"
+        send "PROJ-42\\r"
+        expect "Worktree name*"
+        send "feat\\r"
+        expect eof
+      EXPECT
+      run_wizard_with_expect(script)
+      sleep 1
+
+      result = docker_exec("tmux has-session -t feat-PROJ-42 2>&1; echo $?")
+      expect(result.stdout).to end_with("0")
+    end
+
+    it "creates the {prefix}/ grouping directory when it does not yet exist" do
+      pre = docker_exec("test -d /root/work/px && echo yes || echo no")
+      expect(pre.stdout).to eq("no") # pre-condition: dir absent before the run
+
+      script = <<~EXPECT
+        set timeout 15
+        set env(TFSS_FZF_CMD) "grep prefixed"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "j"
+        expect "Jira ID*"
+        send "PROJ-42\\r"
+        expect "Worktree name*"
+        send "feat\\r"
+        expect eof
+      EXPECT
+      run_wizard_with_expect(script)
+      sleep 1
+
+      result = docker_exec("test -d /root/work/px && echo yes || echo no")
+      expect(result.stdout).to eq("yes")
+    end
+
+    it "prompts to set prefix when missing, saves it, then creates at {parent}/{prefix}/{name}-{jira_id}" do
+      # myproject.bare has no prefix — cleared by outer before(:each)
+      script = <<~EXPECT
+        set timeout 15
+        set env(TFSS_FZF_CMD) "grep myproject"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "j"
+        expect "Set prefix*"
+        send "mp\\r"
+        expect "Jira ID*"
+        send "MP-1\\r"
+        expect "Worktree name*"
+        send "feat\\r"
+        expect eof
+      EXPECT
+      run_wizard_with_expect(script)
+      sleep 1
+
+      # Prefix persisted to git config
+      result = docker_exec("git -C /root/work/myproject.bare config tfss.prefix")
+      expect(result.stdout).to eq("mp")
+
+      # Worktree at correct jira path: /root/work/mp/feat-MP-1
+      result = docker_exec("test -f /root/work/mp/feat-MP-1/.git && echo yes || echo no")
+      expect(result.stdout).to eq("yes")
+    end
+
+    it "errors when prefix is skipped (jira path cannot be constructed)" do
+      # myproject.bare has no prefix — user skips the inline prompt
+      script = <<~EXPECT
+        set timeout 15
+        set env(TFSS_FZF_CMD) "grep myproject"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "j"
+        expect "Set prefix*"
+        send "\\r"
+        expect eof
+        catch wait result
+        exit [lindex $result 3]
+      EXPECT
+      result = run_wizard_with_expect(script)
+      expect(result.stdout).to include("prefix is required")
+      expect(result.exit_code).to eq(1)
+    end
+
+    it "errors when jira ID is empty" do
+      script = <<~EXPECT
+        set timeout 15
+        set env(TFSS_FZF_CMD) "grep prefixed"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "j"
+        expect "Jira ID*"
+        send "\\r"
+        expect eof
+        catch wait result
+        exit [lindex $result 3]
+      EXPECT
+      result = run_wizard_with_expect(script)
+      expect(result.stdout).to include("Must Enter a Jira ID")
+      expect(result.exit_code).to eq(1)
+    end
+
+    it "errors when worktree name is empty" do
+      script = <<~EXPECT
+        set timeout 15
+        set env(TFSS_FZF_CMD) "grep prefixed"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "j"
+        expect "Jira ID*"
+        send "PROJ-42\\r"
+        expect "Worktree name*"
+        send "\\r"
+        expect eof
+        catch wait result
+        exit [lindex $result 3]
+      EXPECT
+      result = run_wizard_with_expect(script)
+      expect(result.stdout).to include("Must Enter a Worktree Name")
+      expect(result.exit_code).to eq(1)
+    end
+
+    it "uses the current pane's bare repo when already inside a bare-repo worktree" do
+      # px-main is a worktree of prefixed.bare (prefix = px)
+      # no TFSS_FZF_CMD needed — bare_dir is detected from TFSS_PANE_PATH
+      script = <<~EXPECT
+        set timeout 15
+        set env(TFSS_PANE_PATH) "/root/work/px-main"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "j"
+        expect "Jira ID*"
+        send "MP-99\\r"
+        expect "Worktree name*"
+        send "task\\r"
+        expect eof
+      EXPECT
+      run_wizard_with_expect(script)
+      sleep 1
+
+      # Must land relative to prefixed.bare, not selected via fzf
+      result = docker_exec("test -f /root/work/px/task-MP-99/.git && echo yes || echo no")
+      expect(result.stdout).to eq("yes")
+    end
+  end
+
   describe "delete worktree flow (d)" do
     before(:each) do
       docker_exec("rm -rf /root/work/mp-delete-test")
