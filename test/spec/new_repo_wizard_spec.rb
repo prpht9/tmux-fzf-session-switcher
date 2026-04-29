@@ -332,6 +332,158 @@ RSpec.describe "new repo wizard (C-a n / tmux-git-new-repo)" do
       result = run_wizard_with_expect(script)
       expect(result.stdout).not_to include("Delete Worktree")
     end
+
+    it "shows bare repo and worktree paths in confirmation prompt" do
+      script = <<~EXPECT
+        set timeout 10
+        set env(TFSS_PANE_PATH) "/root/work/mp-delete-test"
+        set env(TFSS_CURRENT_SESSION) "mp-delete-test"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "d"
+        expect "Bare repo*"
+        send "\\r"
+        expect eof
+      EXPECT
+      result = run_wizard_with_expect(script)
+      expect(result.stdout).to include("myproject.bare")
+      expect(result.stdout).to include("mp-delete-test")
+    end
+
+    it "aborts silently on empty Enter at confirmation" do
+      script = <<~EXPECT
+        set timeout 10
+        set env(TFSS_PANE_PATH) "/root/work/mp-delete-test"
+        set env(TFSS_CURRENT_SESSION) "mp-delete-test"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "d"
+        expect "Yes*"
+        send "\\r"
+        expect eof
+        catch wait result
+        exit [lindex $result 3]
+      EXPECT
+      result = run_wizard_with_expect(script)
+      expect(result.exit_code).to eq(0)
+      exists = docker_exec("test -d /root/work/mp-delete-test && echo yes || echo no")
+      expect(exists.stdout).to eq("yes")
+    end
+
+    it "aborts on 'yes' (lowercase)" do
+      script = <<~EXPECT
+        set timeout 10
+        set env(TFSS_PANE_PATH) "/root/work/mp-delete-test"
+        set env(TFSS_CURRENT_SESSION) "mp-delete-test"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "d"
+        expect "Yes*"
+        send "yes\\r"
+        expect eof
+        catch wait result
+        exit [lindex $result 3]
+      EXPECT
+      result = run_wizard_with_expect(script)
+      expect(result.exit_code).to eq(0)
+      exists = docker_exec("test -d /root/work/mp-delete-test && echo yes || echo no")
+      expect(exists.stdout).to eq("yes")
+    end
+
+    it "aborts on 'y'" do
+      script = <<~EXPECT
+        set timeout 10
+        set env(TFSS_PANE_PATH) "/root/work/mp-delete-test"
+        set env(TFSS_CURRENT_SESSION) "mp-delete-test"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "d"
+        expect "Yes*"
+        send "y\\r"
+        expect eof
+        catch wait result
+        exit [lindex $result 3]
+      EXPECT
+      result = run_wizard_with_expect(script)
+      expect(result.exit_code).to eq(0)
+      exists = docker_exec("test -d /root/work/mp-delete-test && echo yes || echo no")
+      expect(exists.stdout).to eq("yes")
+    end
+
+    it "errors when only one tmux session exists (nothing deleted)" do
+      # Kill the _test_base session so mp-delete-test is the only session
+      docker_exec("tmux new-session -ds mp-delete-test -c /root/work/mp-delete-test 2>/dev/null; true")
+      docker_exec("tmux kill-session -t _test_base 2>/dev/null; true")
+      script = <<~EXPECT
+        set timeout 10
+        set env(TFSS_PANE_PATH) "/root/work/mp-delete-test"
+        set env(TFSS_CURRENT_SESSION) "mp-delete-test"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "d"
+        expect "Yes*"
+        send "Yes\\r"
+        expect eof
+      EXPECT
+      result = run_wizard_with_expect(script)
+      expect(result.stdout).to include("no other session")
+      exists = docker_exec("test -d /root/work/mp-delete-test && echo yes || echo no")
+      expect(exists.stdout).to eq("yes")
+      session = docker_exec("tmux has-session -t mp-delete-test 2>&1; echo $?")
+      expect(session.stdout).to end_with("0")
+    end
+
+    it "errors when worktree is dirty (session and worktree untouched)" do
+      docker_exec("tmux new-session -ds mp-delete-test -c /root/work/mp-delete-test 2>/dev/null; true")
+      docker_exec("tmux new-session -ds anchor -c /root/work 2>/dev/null; true")
+      docker_exec("touch /root/work/mp-delete-test/dirty-file")
+      script = <<~EXPECT
+        set timeout 10
+        set env(TFSS_PANE_PATH) "/root/work/mp-delete-test"
+        set env(TFSS_CURRENT_SESSION) "mp-delete-test"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "d"
+        expect "Yes*"
+        send "Yes\\r"
+        expect eof
+      EXPECT
+      result = run_wizard_with_expect(script)
+      expect(result.stdout + result.stderr).to match(/fatal|error/i)
+      exists = docker_exec("test -d /root/work/mp-delete-test && echo yes || echo no")
+      expect(exists.stdout).to eq("yes")
+      session = docker_exec("tmux has-session -t mp-delete-test 2>&1; echo $?")
+      expect(session.stdout).to end_with("0")
+    ensure
+      docker_exec("rm -f /root/work/mp-delete-test/dirty-file")
+    end
+
+    it "removes worktree and kills session when clean and multiple sessions exist" do
+      docker_exec("tmux new-session -ds mp-delete-test -c /root/work/mp-delete-test 2>/dev/null; true")
+      docker_exec("tmux new-session -ds anchor -c /root/work 2>/dev/null; true")
+      script = <<~EXPECT
+        set timeout 15
+        set env(TFSS_PANE_PATH) "/root/work/mp-delete-test"
+        set env(TFSS_CURRENT_SESSION) "mp-delete-test"
+        spawn bash /opt/tfss/scripts/tmux-git-new-repo
+        expect "New Repo*"
+        send "d"
+        expect "Yes*"
+        send "Yes\\r"
+        expect eof
+      EXPECT
+      run_wizard_with_expect(script)
+      sleep 1
+
+      exists = docker_exec("test -d /root/work/mp-delete-test && echo yes || echo no")
+      expect(exists.stdout).to eq("no")
+
+      session = docker_exec("tmux has-session -t mp-delete-test 2>&1; echo $?")
+      expect(session.stdout).not_to end_with("0")
+
+      bare = docker_exec("test -d /root/work/myproject.bare && echo yes || echo no")
+      expect(bare.stdout).to eq("yes")
+    end
   end
 
   describe "empty choice" do

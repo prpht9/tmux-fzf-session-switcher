@@ -150,6 +150,35 @@ case $flow_choice in
     exit 0
     ;;
 
+  d) # delete current bare-repo worktree and its tmux session
+    current_session="${TFSS_CURRENT_SESSION:-$(tmux display-message -p '#S' 2>/dev/null)}"
+
+    echo
+    echo "Bare repo:  $bare_dir"
+    echo "Worktree:   $worktree_root"
+    echo
+    read -r -p 'Type "Yes" to confirm deletion [N]: ' confirm
+    if [[ $confirm != "Yes" ]]; then
+      exit 0
+    fi
+
+    session_count=$(tmux list-sessions 2>/dev/null | wc -l | tr -d ' ')
+    if [[ $session_count -le 1 ]]; then
+      echo "Cannot delete: no other session to switch to"
+      exit 1
+    fi
+
+    if ! git -C "$bare_dir" worktree remove "$worktree_root"; then
+      exit 1
+    fi
+
+    if [[ -n $TMUX ]]; then
+      tmux switch-client -l
+    fi
+    tmux kill-session -t "$current_session"
+    exit 0
+    ;;
+
   *)
     echo "Repo Command Invalid"
     exit 1
